@@ -1,0 +1,40 @@
+{
+	"3rdParty":{
+		"IeDriver": "../3rdParty/IEDriverServer_Win32_3.150.1/IEDriverServer.exe"
+	},
+	"HotPepper":{
+		"BaseURL": "https://www.hotpepper.jp",
+		"Url": "https://www.hotpepper.jp/index.html",
+		
+		"__Area_Desc": "地方のindex",
+		"Area":{
+			"北海道・東北": 1,
+			"関東": 2,
+			"北陸・甲信越": 3,
+			"中部": 4,
+			"関西": 5,
+			"中国": 6,
+			"四国": 7,
+			"九州・沖縄": 8
+		},
+		"__Prefecture_Desc": "県のindex",
+		"Prefecture":{
+			"北海道": 1, "青森": 2, "秋田": 3, "山形": 4, "岩手": 5, "宮城": 6, "福島": 7,
+			"東京": 1, "神奈川": 2, "埼玉": 3, "千葉": 4, "栃木": 5, "茨城": 6, "群馬": 7,
+			"新潟": 1, "山梨": 2, "長野": 3, "石川": 4, "富山": 5, "福井": 6,
+			"愛知": 1, "岐阜": 2, "静岡": 3, "三重": 4,
+			"大阪": 1, "兵庫": 2, "京都": 3, "滋賀": 4, "奈良": 5, "和歌山": 6,
+			"岡山": 1, "広島": 2, "鳥取": 3, "島根": 4, "山口": 5,
+			"香川": 1, "徳島": 2, "愛媛": 3, "高知": 4,
+			"福岡": 1, "佐賀": 2, "長崎": 3, "熊本": 4, "大分": 5, "宮崎": 6, "鹿児島": 7, "沖縄": 8
+		},
+
+		"Json":{
+			"__PrefectureButton_Desc": "{地方index} {県index}で店を検索する",
+			"PrefectureButton": "/html/body/div[1]/div[1]/div[3]/ul/li[{}]/dl/dd[{}]/a",
+			"CityInput": "//*[@id='tab1']/div/p[1]/input",
+			"CityButton": "//*[@id='tab1']/div/p[2]/a/img",
+			"NextButton": "//*[@id='basicSearchForm']/div[4]/div[2]/div[{}]/ul/li[{}]/a"
+		}
+	}
+}

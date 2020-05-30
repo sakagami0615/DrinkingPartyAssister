@@ -1,0 +1,8 @@
+{
+	"PartyName" : "SAMPLE",
+	"Area"      : "関東",
+	"Prefecture": "東京",
+	"City"      : "新宿",
+	"MoneyRange": [0, 4000],
+	"SearchNum" : 10
+}
