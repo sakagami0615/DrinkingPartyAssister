@@ -1,14 +1,8 @@
 import re
 import time
-from tqdm import tqdm
 
 from bs4 import BeautifulSoup
-from selenium import webdriver										# webdriver の情報
-from selenium.webdriver.common.by import By							# html の タブの情報を取得
-from selenium.webdriver.common.keys import Keys						# キーボードを叩いた時に web ブラウザに情報を送信する
-from selenium.webdriver.support import expected_conditions as EC	# 次にクリックしたページがどんな状態になっているかチェックする
-from selenium.webdriver.support.ui import WebDriverWait				# 待機時間を設定
-from selenium.webdriver.common.alert import Alert					# 確認ダイアログ制御
+from selenium import webdriver
 
 
 import load
@@ -40,6 +34,12 @@ class Assister:
 
 		self.driver = webdriver.Ie(self.system_param['3rdParty']['IeDriver'])
 
+	
+	def Close(self):
+		
+		self.driver.close()
+
+
 
 	def LoadWebPageTop(self):
 		
@@ -66,14 +66,16 @@ class Assister:
 			shop_details = []
 			
 			for soup in find_soup:
-				shop_soup = soup.find('h3', {'class': 'shopDetailStoreName'}).find('a')
-				name = re.sub(r'[\u3000]', ' ', shop_soup.get_text())
+				
+				name = re.sub(r'[\u3000]', ' ', soup.find('h3', {'class': 'shopDetailStoreName'}).find('a').get_text())
+				url = '{}{}'.format(self.system_param['HotPepper']['BaseURL'], soup.find('h3', {'class': 'shopDetailStoreName'}).find('a').get('href'))
+				seat_search = re.match(r'[\t\n\r\f\v]*(\d+)', str(soup.find('li', {'class': 'shopDetailInfoCapacity'}).get_text()))
 
-				url = '{}{}'.format(self.system_param['HotPepper']['BaseURL'], shop_soup.get('href'))
-
+				seat_num = None if seat_search == None else int(seat_search[0])
 				shop_details.append({
 					'Name': name,
-					'URL': url
+					'SeatNum': seat_num,
+					'Url': url
 				})
 			return shop_details
 
@@ -82,16 +84,21 @@ class Assister:
 		page_index = 0
 
 		while True:
-			page_soup = BeautifulSoup(self.driver.page_source, 'html5lib')			
-			shop_details.extend(GetShopDetailTop(page_soup.find_all('div', {'class': 'shopDetailTop PR shopDetailWithCourseCalendar'})))
-			shop_details.extend(GetShopDetailTop(page_soup.find_all('div', {'class': 'shopDetailTop shopDetailWithCourseCalendar'})))
+			page_soup = BeautifulSoup(self.driver.page_source, 'html5lib')
+			curr_shop_details = []		
+			curr_shop_details.extend(GetShopDetailTop(page_soup.find_all('div', {'class': 'shopDetailTop PR shopDetailWithCourseCalendar'})))
+			curr_shop_details.extend(GetShopDetailTop(page_soup.find_all('div', {'class': 'shopDetailTop shopDetailWithCourseCalendar'})))
+			
+			for curr_shop_detail in curr_shop_details:
+				if (curr_shop_detail['SeatNum'] != None) and (curr_shop_detail['SeatNum'] >= self.member_dict['Num']): 
+					shop_details.append(curr_shop_detail)
 
 			if len(shop_details) >= self.search_param['SearchNum']:
 				shop_details = shop_details[:self.search_param['SearchNum']]
 				break
 
 			return_button_index = 10 if page_index == 0 else 11
-			self.driver.find_element_by_xpath(self.system_param['HotPepper']['Json']['NextButton'].format(len(shop_soup) + 2, return_button_index)).click()
+			self.driver.find_element_by_xpath(self.system_param['HotPepper']['Json']['NextButton'].format(len(curr_shop_details) + 2, return_button_index)).click()
 
 			time.sleep(1)
 
@@ -105,49 +112,34 @@ class Assister:
 		
 		course_details = []
 
-		"""
-		for shop_elm in tqdm(shop_soups):
-			
-			try:
-				name_elm = shop_elm.find_all('h3', {'class', 'shopDetailStoreName'})
-				name_soup = BeautifulSoup(str(name_elm), 'html5lib')
-				name_str_elm = name_soup.find_all(href=re.compile('/str'))[0]
+		for shop_detail in shop_details:
 
-				link = 'https://www.hotpepper.jp{}'.format(name_str_elm.get('href'))
+			self.driver.get('{}course/'.format(shop_detail['Url']))
+			time.sleep(1)
 
-				budget_elm = shop_elm.find_all('li', {'class', 'shopDetailInfoBudget'})
-				budget_soup = BeautifulSoup(str(budget_elm), 'html5lib')
+			page_soup = BeautifulSoup(self.driver.page_source, 'html5lib')		
+			course_soups = page_soup.find_all('div', {'class': 'courseCassette'})
 
-				capacity_elm = shop_elm.find_all('li', {'class', 'shopDetailInfoCapacity'})
-				capacity_soup = BeautifulSoup(str(capacity_elm), 'html5lib')
-
-				time_elm = shop_elm.find_all('li', {'class', 'shopDetailInfoTime'})
-				time_soup = BeautifulSoup(str(time_elm), 'html5lib')
+			for course_soup in course_soups:
 				
-				name = re.sub(r'[\u3000]', ' ', name_str_elm.text)
-				budget = re.sub(r'[\u3000\n\t\[\]]', '', budget_soup.text)
-				budget = re.sub(r'[\u3000]', ' ', budget)
-				capacity = re.sub(r'[\u3000\n\t\[\]]', '', capacity_soup.text)
-				capacity = re.sub(r'[\u3000]', ' ', capacity)
-				time = re.sub(r'[\n\t\[\]]', '', time_soup.text)
-				time = re.sub(r'[\u3000]', ' ', time)
+				name = re.sub(r'[\u3000]', ' ', course_soup.find('p', {'class': 'courseCassetteTitle'}).find('a').get_text())
+				url = '{}{}'.format(shop_detail['Url'], course_soup.find('p', {'class': 'courseCassetteTitle'}).find('a').get('href'))
+				money_soup = course_soup.find('span', {'class': 'priceNumber'})
+				if (money_soup == None): continue
 
-
-				course_details = self.GetCourseDetail(link)
-
-
-				shop_details.append({
-					'Name'    : name,
-					'Budget'  : budget,
-					'Capacity': capacity,
-					'Time'    : time,
-					'Link'    : link,
-					'Courses' : course_details
-				})
-			
-			except:
-				pass
-		"""
+				money_str = money_soup.get_text().replace(',', '')
+				if not money_str.isdigit(): continue
+				money = int(money_str)
+				
+				if (money > min(self.search_param['MoneyRange'])) and(money <= max(self.search_param['MoneyRange'])):
+					course_details.append({
+						'ShopName': shop_detail['Name'],
+						'SeatNum': shop_detail['SeatNum'],
+						'ShopUrl': shop_detail['Url'],
+						'CourseName': name,
+						'CourseUrl': url,
+						'Money': money
+					})
 
 		return course_details
 
@@ -155,18 +147,3 @@ class Assister:
 
 
 
-if __name__ == '__main__':
-	
-	assist = Assister()
-	
-	assist.LoadWebPageTop()
-	assist.SetShopConditions()
-
-	shop_details = assist.GetShopDetail()
-	course_details = assist.GetCourseDetail(shop_details)
-
-	
-#	for detail in shop_details:
-#		print('-'*30)
-#		print(detail)
-#	print('-'*30)
