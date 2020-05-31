@@ -1,3 +1,4 @@
+import os
 import re
 import time
 import openpyxl
@@ -143,24 +144,30 @@ class Assister:
 
 		return course_details
 
-	
+
 	def AddResultSheet4Excel(self, course_details):
 
 		SELECT_KEYS  = ['ShopName', 'CourseName', 'Money', 'SeatNum', 'CourseUrl']
 		HEADER_NAMES = ['店名', 'コース名', '金額', 'シート数', 'URL']
 		HEADER_LINE_NUM = 1
 		
-		workbook = openpyxl.load_workbook(INPUT_EXCEL_FILEPATH)
-		tgt_sheet = workbook[self.member_dict['SheetName']]
-
-		add_sheet_idx = workbook.index(tgt_sheet) + 1
-		add_sheet_name = '{}(開催場所候補)'.format(self.search_param['PartyName'])
+		filepath = '../{}(開催場所候補).xlsx'.format(self.search_param['PartyName'])
+		sheet_name = '{}(開催場所候補)'.format(self.search_param['PartyName'])
 		
-		sheet = workbook.create_sheet(index=add_sheet_idx, title=add_sheet_name)
+		if not os.path.isfile(filepath):
+			workbook = openpyxl.Workbook()
+			sheet = workbook.active
+			sheet.title = sheet_name
+		else:
+			workbook = openpyxl.load_workbook(filepath)
+			workbook.remove_sheet(workbook.get_sheet_by_name(sheet_name))
+			sheet = workbook.create_sheet(index=0, title=sheet_name)
 		
 		for (idx, name) in enumerate(HEADER_NAMES):			
 			sheet.cell(HEADER_LINE_NUM, idx + 1).value = name
 		
 		for (row, course_detail) in enumerate(course_details):
-			for (col, key) in enumerate(SELECT_KEYS):		
+			for (col, key) in enumerate(SELECT_KEYS):
 				sheet.cell(row + 1 + HEADER_LINE_NUM, col + 1).value = course_detail[key]
+		
+		workbook.save(filepath)
