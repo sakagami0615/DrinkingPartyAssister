@@ -22,7 +22,7 @@ def LoadMemberStatus(filepath, party_name):
 	
 	row = INIT_ROW
 
-	member_dict = {'Members': [], 'Num': None}
+	member_dict = {'SheetName': sheet_name, 'Members': [], 'Num': None}
 
 	while True:
 		if sheet.cell(row, INIT_COL).value != None :

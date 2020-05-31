@@ -1,5 +1,6 @@
 import re
 import time
+import openpyxl
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -38,8 +39,7 @@ class Assister:
 	def Close(self):
 		
 		self.driver.close()
-
-
+	
 
 	def LoadWebPageTop(self):
 		
@@ -144,6 +144,23 @@ class Assister:
 		return course_details
 
 	
+	def AddResultSheet4Excel(self, course_details):
 
+		SELECT_KEYS  = ['ShopName', 'CourseName', 'Money', 'SeatNum', 'CourseUrl']
+		HEADER_NAMES = ['店名', 'コース名', '金額', 'シート数', 'URL']
+		HEADER_LINE_NUM = 1
+		
+		workbook = openpyxl.load_workbook(INPUT_EXCEL_FILEPATH)
+		tgt_sheet = workbook[self.member_dict['SheetName']]
 
-
+		add_sheet_idx = workbook.index(tgt_sheet) + 1
+		add_sheet_name = '{}(開催場所候補)'.format(self.search_param['PartyName'])
+		
+		sheet = workbook.create_sheet(index=add_sheet_idx, title=add_sheet_name)
+		
+		for (idx, name) in enumerate(HEADER_NAMES):			
+			sheet.cell(HEADER_LINE_NUM, idx + 1).value = name
+		
+		for (row, course_detail) in enumerate(course_details):
+			for (col, key) in enumerate(SELECT_KEYS):		
+				sheet.cell(row + 1 + HEADER_LINE_NUM, col + 1).value = course_detail[key]

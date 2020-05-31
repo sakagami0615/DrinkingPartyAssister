@@ -11,7 +11,6 @@ if __name__ == '__main__':
 	shop_details = assist.GetShopDetail()
 	course_details = assist.GetCourseDetail(shop_details)
 
-	for course_detail in course_details:
-		print(course_detail)
+	assist.AddResultSheet4Excel(course_details)
 
 	assist.Close()
