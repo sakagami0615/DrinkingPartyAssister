@@ -2,3 +2,5 @@
 
 cd api
 python main.py
+
+Pause()
